@@ -1,0 +1,17 @@
+flask
+supabase
+python-dotenv
+Flask-SocketIO
+eventlet
+Flask-Cors
+langchain>=1.0.0
+langchain-core>=1.0.0
+langchain-community
+langchain-google-genai>=3.0.0
+langchain-huggingface
+faiss-cpu
+sentence-transformers
+gotrue
+
+# Production server
+gunicorn>=21.0.0
