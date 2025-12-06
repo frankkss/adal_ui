@@ -23,11 +23,21 @@ let currentUser = null; // Store user info
 
 // Configure marked.js for better Markdown rendering
 if (typeof marked !== 'undefined') {
+    // Create a custom renderer for links
+    const renderer = new marked.Renderer();
+    const originalLinkRenderer = renderer.link.bind(renderer);
+    
+    renderer.link = function(href, title, text) {
+        const html = originalLinkRenderer(href, title, text);
+        return html.replace(/^<a /, '<a target="_blank" rel="noopener noreferrer" ');
+    };
+    
     marked.setOptions({
         breaks: true,
         gfm: true,
         headerIds: false,
         mangle: false,
+        renderer: renderer,
         highlight: function(code, lang) {
             if (lang && hljs.getLanguage(lang)) {
                 try {
