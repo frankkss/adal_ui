@@ -4,7 +4,7 @@ Adapted from cbot_stlit/rag_chain_hybrid.py with smart retrieval
 """
 from typing import Tuple, Generator
 from langchain_community.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_google_vertexai import ChatVertexAI, VertexAIEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -67,11 +67,10 @@ def load_retriever(persist_dir=None, embedding_type=None):
                 encode_kwargs={'normalize_embeddings': True}
             )
         else:
-            # For indexes created with Gemini API
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/gemini-embedding-001",
-                task_type="RETRIEVAL_QUERY",
-                async_client=False
+            # For indexes created with Vertex AI API
+            embeddings = VertexAIEmbeddings(
+                model_name="textembedding-gecko@001",
+                project=os.getenv('GOOGLE_CLOUD_PROJECT')
             )
         
         vs = FAISS.load_local(persist_dir, embeddings, allow_dangerous_deserialization=True)
@@ -82,7 +81,7 @@ def load_retriever(persist_dir=None, embedding_type=None):
         logger.warning(f"Failed to load with {embedding_type} embeddings: {e}")
         
         # Try the other embedding type as fallback
-        fallback_type = "gemini" if embedding_type == "huggingface" else "huggingface"
+        fallback_type = "vertexai" if embedding_type == "huggingface" else "huggingface"
         logger.info(f"Trying fallback: {fallback_type} embeddings...")
         
         try:
@@ -93,10 +92,9 @@ def load_retriever(persist_dir=None, embedding_type=None):
                     encode_kwargs={'normalize_embeddings': True}
                 )
             else:
-                embeddings = GoogleGenerativeAIEmbeddings(
-                    model="models/gemini-embedding-001",
-                    task_type="RETRIEVAL_QUERY",
-                    async_client=False
+                embeddings = VertexAIEmbeddings(
+                    model_name="textembedding-gecko@001",
+                    project=os.getenv('GOOGLE_CLOUD_PROJECT')
                 )
             
             vs = FAISS.load_local(persist_dir, embeddings, allow_dangerous_deserialization=True)
@@ -351,7 +349,12 @@ def build_chain(embedding_type=None) -> Tuple:
     Returns: (chain, vectorstore)
     """
     vectorstore = load_retriever(embedding_type=embedding_type)
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+    llm = ChatVertexAI(
+        model="gemini-2.5-flash",
+        temperature=0,
+        project=os.getenv('GOOGLE_CLOUD_PROJECT'),
+        location=os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
+    )
     
     # Create a custom retrieval function that uses smart_retrieve
     def custom_retrieve(question: str) -> str:
@@ -388,12 +391,14 @@ def build_streaming_chain(persist_dir=None):
         # Load vectorstore using the same function as build_chain
         vectorstore = load_retriever(persist_dir)
         
-        logger.info("Initializing Gemini LLM with streaming...")
-        # Create LLM with streaming - using same model as rag_chain.py
-        llm = ChatGoogleGenerativeAI(
+        logger.info("Initializing Vertex AI LLM with streaming...")
+        # Create LLM with streaming - using Vertex AI instead of google-genai
+        llm = ChatVertexAI(
             model="gemini-2.5-flash",
             temperature=0,
-            streaming=True
+            streaming=True,
+            project=os.getenv('GOOGLE_CLOUD_PROJECT'),
+            location=os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
         )
         
         logger.info("Streaming RAG chain built successfully (model: gemini-2.5-flash, streaming: enabled)")
