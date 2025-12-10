@@ -87,6 +87,11 @@
                         <div class="dropdown-user-email">{{ session.user.email or 'student@cspc.edu.ph' }}</div>
                     </div>
                     <div class="dropdown-divider"></div>
+                    <a href="{{ url_for('admin.dashboard') }}" class="dropdown-item" id="admin-btn" style="display: none;">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Admin Dashboard</span>
+                    </a>
+                    <div class="dropdown-divider admin-divider" style="display: none;"></div>
                     <button class="dropdown-item" id="settings-btn">
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - ADAL</title>
+    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/adal_iconb.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .unauthorized-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1f2e 0%, #0f1219 100%);
+            color: #fff;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .unauthorized-icon {
+            font-size: 5rem;
+            color: #ef4444;
+            margin-bottom: 1.5rem;
+        }
+        
+        .unauthorized-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .unauthorized-message {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="unauthorized-container">
+        <i class="fas fa-shield-alt unauthorized-icon"></i>
+        <h1 class="unauthorized-title">Access Denied</h1>
+        <p class="unauthorized-message">
+            You don't have permission to access the admin dashboard. 
+            If you believe this is an error, please contact your administrator.
+        </p>
+        <a href="{{ url_for('main.chat') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Chat
+        </a>
+    </div>
+</body>
+</html>

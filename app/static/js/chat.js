@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     loadChatHistory();
     fetchCurrentUser(); // Fetch user info on load
+    checkAdminStatus(); // Check if user is admin
     
     // Load sidebar state from localStorage
     const sidebarState = localStorage.getItem('sidebarCollapsed');
@@ -62,6 +63,25 @@ async function fetchCurrentUser() {
         }
     } catch (error) {
         console.error('Error fetching user:', error);
+    }
+}
+
+// Check if current user is admin
+async function checkAdminStatus() {
+    try {
+        const response = await fetch('/admin/api/check');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.is_admin) {
+                // Show admin link in dropdown
+                const adminBtn = document.getElementById('admin-btn');
+                const adminDivider = document.querySelector('.admin-divider');
+                if (adminBtn) adminBtn.style.display = 'flex';
+                if (adminDivider) adminDivider.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking admin status:', error);
     }
 }
 

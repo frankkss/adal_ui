@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ADAL</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/adal_iconb.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/adal_iconb.png') }}">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for analytics charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='img/adal_iconb.png') }}" alt="ADAL" class="logo">
+                <span class="logo-text">ADAL Admin</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-item active">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.queries') }}" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Queries</span>
+                </a>
+                <a href="{{ url_for('admin.users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                {% if admin_role == 'super_admin' %}
+                <a href="{{ url_for('admin.settings') }}" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                {% endif %}
+                
+                <div class="nav-divider"></div>
+                
+                <a href="{{ url_for('main.chat') }}" class="nav-item">
+                    <i class="fas fa-comments"></i>
+                    <span>Back to Chat</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://ui-avatars.com/api/?name={{ user.full_name or 'Admin' }}&background=10b981&color=fff" alt="User Avatar">
+                    <div class="user-details">
+                        <span class="user-name">{{ user.full_name or 'Admin' }}</span>
+                        <span class="user-role">{{ admin_role | capitalize }}</span>
+                    </div>
+                </div>
+                <button id="logout-btn" class="logout-btn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="date-filter">
+                        <label for="date-range">Period:</label>
+                        <select id="date-range" class="filter-select">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+                    <button class="refresh-btn" id="refresh-btn" title="Refresh Data">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Stats Cards -->
+                <section class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon queries">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Queries</span>
+                            <span class="stat-value" id="total-queries">--</span>
+                            <span class="stat-change positive" id="queries-change">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>0%</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Active Users</span>
+                            <span class="stat-value" id="active-users">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon sessions">
+                            <i class="fas fa-message"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Chat Sessions</span>
+                            <span class="stat-value" id="total-sessions">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon response">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Avg Response Time</span>
+                            <span class="stat-value" id="avg-response">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Success Rate</span>
+                            <span class="stat-value" id="success-rate">--</span>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Charts Row -->
+                <section class="charts-row">
+                    <div class="chart-card large">
+                        <div class="card-header">
+                            <h3>Query Trends</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="queries-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3>Hourly Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="hourly-chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Bottom Row -->
+                <section class="bottom-row">
+                    <!-- Popular Queries -->
+                    <div class="data-card">
+                        <div class="card-header">
+                            <h3>Trending Topics</h3>
+                            <a href="{{ url_for('admin.queries') }}" class="view-all">View All</a>
+                        </div>
+                        <div class="card-content">
+                            <ul class="trending-list" id="popular-queries">
+                                <li class="loading-placeholder">
+                                    <span class="skeleton"></span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Query Categories -->
+                    <div class="chart-card small">
+                        <div class="card-header">
+                            <h3>Query Categories</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="categories-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="data-card">
+                        <div class="card-header">
+                            <h3>Recent Activity</h3>
+                        </div>
+                        <div class="card-content">
+                            <ul class="activity-list" id="recent-activity">
+                                <li class="loading-placeholder">
+                                    <span class="skeleton"></span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

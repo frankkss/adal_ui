@@ -172,11 +172,15 @@ def chat_api():
     """Handle chat messages with streaming and conversation history support"""
     from .rag_service import is_allowed, stream_with_history
     from .auth_service import auth_service
+    from .admin_service import admin_service
     
     try:
         data = request.get_json()
         user_message = data.get('message', '')
         chat_id = data.get('chat_id', None)
+        
+        # Track start time for analytics
+        start_time = time.time()
         
         logger.debug(f"Received message: {user_message[:100]}...")
         
@@ -268,6 +272,21 @@ def chat_api():
                         logger.debug(f"Bot response saved ({len(bot_response)} chars)")
                     else:
                         logger.warning(f"Failed to save bot response: {msg_result}")
+                
+                # Log query analytics
+                try:
+                    response_time_ms = int((time.time() - start_time) * 1000)
+                    admin_service.log_query(
+                        user_id=user_id,
+                        query_text=user_message,
+                        query_type='chat',
+                        response_time_ms=response_time_ms,
+                        was_successful=stream_error is None,
+                        error_type=stream_error
+                    )
+                    logger.debug("Query analytics logged")
+                except Exception as analytics_error:
+                    logger.warning(f"Failed to log analytics: {analytics_error}")
                         
             except Exception as e:
                 logger.error(f"Error saving messages in background: {str(e)}")

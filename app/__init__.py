@@ -45,6 +45,11 @@ def create_app(config_class=None):
         from .auth_service import auth_service
         auth_service.init_app(app)
         logger.info("Supabase authentication initialized")
+        
+        # Initialize Admin Service with the same Supabase client
+        from .admin_service import admin_service
+        admin_service.init_app(auth_service.admin_supabase)
+        logger.info("Admin service initialized")
     except Exception as e:
         logger.error(f"Failed to initialize Supabase auth: {str(e)}")
         raise
@@ -85,6 +90,8 @@ def create_app(config_class=None):
     # Register blueprints
     with app.app_context():
         from . import routes
+        from .admin_routes import admin_bp
         app.register_blueprint(routes.bp)
+        app.register_blueprint(admin_bp)
     
     return app

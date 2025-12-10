@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Analytics - ADAL Admin</title>
+    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/adal_iconb.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='img/adal_iconb.png') }}" alt="ADAL" class="logo">
+                <span class="logo-text">ADAL Admin</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.queries') }}" class="nav-item active">
+                    <i class="fas fa-search"></i>
+                    <span>Queries</span>
+                </a>
+                <a href="{{ url_for('admin.users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                
+                <div class="nav-divider"></div>
+                
+                <a href="{{ url_for('main.chat') }}" class="nav-item">
+                    <i class="fas fa-comments"></i>
+                    <span>Back to Chat</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://ui-avatars.com/api/?name={{ user.full_name or 'Admin' }}&background=10b981&color=fff" alt="User Avatar">
+                    <div class="user-details">
+                        <span class="user-name">{{ user.full_name or 'Admin' }}</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>Query Analytics</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-queries" placeholder="Search queries...">
+                    </div>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <!-- Popular Queries Table -->
+                <div class="data-card full-width">
+                    <div class="card-header">
+                        <h3>Popular Query Topics</h3>
+                    </div>
+                    <div class="card-content">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Query Pattern</th>
+                                    <th>Category</th>
+                                    <th>Count</th>
+                                    <th>Last Queried</th>
+                                </tr>
+                            </thead>
+                            <tbody id="popular-queries-table">
+                                <tr class="loading-row">
+                                    <td colspan="5">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Recent Queries Table -->
+                <div class="data-card full-width">
+                    <div class="card-header">
+                        <h3>Recent Queries</h3>
+                        <div class="filter-controls">
+                            <select id="query-type-filter" class="filter-select">
+                                <option value="">All Types</option>
+                                <option value="chat">Chat</option>
+                                <option value="search">Search</option>
+                            </select>
+                            <select id="status-filter" class="filter-select">
+                                <option value="">All Status</option>
+                                <option value="success">Success</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Query</th>
+                                    <th>Type</th>
+                                    <th>Response Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-queries-table">
+                                <tr class="loading-row">
+                                    <td colspan="5">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/admin-queries.js') }}"></script>
+</body>
+</html>

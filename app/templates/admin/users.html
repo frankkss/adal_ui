@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - ADAL Admin</title>
+    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/adal_iconb.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='img/adal_iconb.png') }}" alt="ADAL" class="logo">
+                <span class="logo-text">ADAL Admin</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.queries') }}" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Queries</span>
+                </a>
+                <a href="{{ url_for('admin.users') }}" class="nav-item active">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                
+                <div class="nav-divider"></div>
+                
+                <a href="{{ url_for('main.chat') }}" class="nav-item">
+                    <i class="fas fa-comments"></i>
+                    <span>Back to Chat</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://ui-avatars.com/api/?name={{ user.full_name or 'Admin' }}&background=10b981&color=fff" alt="User Avatar">
+                    <div class="user-details">
+                        <span class="user-name">{{ user.full_name or 'Admin' }}</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>User Management</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-users" placeholder="Search users...">
+                    </div>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <!-- User Stats -->
+                <section class="stats-cards compact">
+                    <div class="stat-card">
+                        <div class="stat-icon users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Users</span>
+                            <span class="stat-value" id="total-users">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon active">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Power Users</span>
+                            <span class="stat-value" id="power-users">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon queries">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Avg Queries/User</span>
+                            <span class="stat-value" id="avg-queries">--</span>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Users Table -->
+                <div class="data-card full-width">
+                    <div class="card-header">
+                        <h3>All Users</h3>
+                        <div class="pagination-info" id="pagination-info">
+                            Showing 0-0 of 0
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Sessions</th>
+                                    <th>Queries</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table">
+                                <tr class="loading-row">
+                                    <td colspan="4">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="pagination" id="pagination">
+                            <button class="btn-page" id="prev-page" disabled>
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <span class="page-info" id="page-info">Page 1</span>
+                            <button class="btn-page" id="next-page">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- User Details Modal -->
+    <div class="modal" id="user-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>User Details</h2>
+                <button class="modal-close" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="user-details">
+                Loading...
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/admin-users.js') }}"></script>
+</body>
+</html>
