@@ -4,9 +4,17 @@ Provides admin authentication and dashboard endpoints
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
 from datetime import datetime, timedelta
+from werkzeug.utils import secure_filename
 import logging
 
 from .admin_service import admin_service
+from .upload_service import (
+    process_pdf_upload, 
+    get_uploaded_documents,
+    delete_document,
+    DuplicateDocumentError,
+    PDFExtractionError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,21 +77,27 @@ def dashboard():
 @admin_required
 def users():
     """User management page"""
-    return render_template('admin/users.html', user=session.get('user'))
+    user_id = session.get('user', {}).get('id')
+    role = admin_service.get_admin_role(user_id)
+    return render_template('admin/users.html', user=session.get('user'), admin_role=role)
 
 
 @admin_bp.route('/queries')
 @admin_required
 def queries():
     """Query analytics page"""
-    return render_template('admin/queries.html', user=session.get('user'))
+    user_id = session.get('user', {}).get('id')
+    role = admin_service.get_admin_role(user_id)
+    return render_template('admin/queries.html', user=session.get('user'), admin_role=role)
 
 
 @admin_bp.route('/settings')
 @super_admin_required
 def settings():
     """Admin settings page (super admin only)"""
-    return render_template('admin/settings.html', user=session.get('user'))
+    user_id = session.get('user', {}).get('id')
+    role = admin_service.get_admin_role(user_id)
+    return render_template('admin/settings.html', user=session.get('user'), admin_role=role)
 
 
 # ============================================
@@ -266,3 +280,126 @@ def api_check_admin():
         'is_admin': is_admin,
         'role': role
     }), 200
+
+
+# ============================================
+# Document Upload API (Admin Only)
+# ============================================
+
+ALLOWED_EXTENSIONS = {'pdf'}
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@admin_bp.route('/upload')
+@admin_required
+def upload_page():
+    """Document upload page"""
+    user_id = session.get('user', {}).get('id')
+    role = admin_service.get_admin_role(user_id)
+    return render_template('admin/upload.html', user=session.get('user'), admin_role=role)
+
+
+@admin_bp.route('/api/upload', methods=['POST'])
+@admin_required
+def api_upload_document():
+    """
+    Upload and index a new PDF thesis document
+    
+    Form fields:
+    - file: PDF file (required)
+    - title: Thesis title (optional, extracted from PDF if not provided)
+    - url: Google Drive URL (optional)
+    - department: Department/College (optional)
+    - year: Publication year (optional)
+    - allow_duplicate: Allow uploading even if duplicate detected (optional)
+    """
+    # Check if file was provided
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Only PDF files are allowed'}), 400
+    
+    # Get form data
+    title = request.form.get('title', '').strip()
+    url = request.form.get('url', '').strip()
+    department = request.form.get('department', '').strip()
+    year = request.form.get('year', '').strip()
+    allow_duplicate = request.form.get('allow_duplicate', '').lower() in ('true', '1', 'yes')
+    
+    filename = secure_filename(file.filename)
+    
+    try:
+        result = process_pdf_upload(
+            file=file,
+            filename=filename,
+            title=title,
+            url=url,
+            department=department,
+            year=year,
+            allow_duplicate=allow_duplicate
+        )
+        
+        logger.info(f"Admin {session.get('user', {}).get('email')} uploaded document: {filename}")
+        return jsonify(result), 200
+        
+    except DuplicateDocumentError as e:
+        return jsonify({
+            'error': str(e),
+            'error_type': 'duplicate'
+        }), 409
+        
+    except PDFExtractionError as e:
+        return jsonify({
+            'error': str(e),
+            'error_type': 'extraction_failed'
+        }), 422
+        
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        return jsonify({
+            'error': f'Upload failed: {str(e)}',
+            'error_type': 'unknown'
+        }), 500
+
+
+@admin_bp.route('/api/documents')
+@admin_required
+def api_list_documents():
+    """Get list of all uploaded documents"""
+    try:
+        documents = get_uploaded_documents()
+        return jsonify({
+            'documents': documents,
+            'total': len(documents)
+        }), 200
+    except Exception as e:
+        logger.error(f"Error fetching documents: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@admin_bp.route('/api/documents/<filename>', methods=['DELETE'])
+@super_admin_required
+def api_delete_document(filename):
+    """
+    Delete a document (super admin only)
+    Note: This removes metadata but the embeddings remain in FAISS
+    """
+    try:
+        success = delete_document(filename)
+        if success:
+            logger.info(f"Admin {session.get('user', {}).get('email')} deleted document: {filename}")
+            return jsonify({'message': f'Document {filename} deleted'}), 200
+        else:
+            return jsonify({'error': 'Document not found'}), 404
+    except Exception as e:
+        logger.error(f"Error deleting document: {e}")
+        return jsonify({'error': str(e)}), 500

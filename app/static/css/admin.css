@@ -300,6 +300,9 @@ body {
 
 .dashboard-content {
     padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 /* Stats Cards */
@@ -402,7 +405,7 @@ body {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 20px;
-    margin-bottom: 24px;
+    /* margin-bottom: 24px; */
 }
 
 .chart-card {

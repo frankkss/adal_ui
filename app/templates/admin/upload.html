@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Thesis - ADAL Admin</title>
+    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/adal_iconb.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .upload-zone {
+            border: 2px dashed #4a5568;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #1a1a2e;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .upload-zone i {
+            font-size: 48px;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+        
+        .upload-zone.dragover i {
+            color: #10b981;
+        }
+        
+        .upload-zone p {
+            color: #a0aec0;
+            margin: 0;
+        }
+        
+        .upload-zone .file-name {
+            color: #10b981;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background: #1a1a2e;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+        
+        .form-group .hint {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .upload-btn:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result-box.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #10b981;
+            display: block;
+        }
+        
+        .result-box.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            display: block;
+        }
+        
+        .result-box.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            color: #f59e0b;
+            display: block;
+        }
+        
+        .result-box h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-details {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        
+        .result-details p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: #4a5568;
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar.active {
+            display: block;
+        }
+        
+        .progress-bar .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progress-pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes progress-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Documents Table */
+        .documents-list {
+            margin-top: 30px;
+        }
+        
+        .documents-list table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .documents-list th,
+        .documents-list td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #2d3748;
+        }
+        
+        .documents-list th {
+            color: #a0aec0;
+            font-weight: 500;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        
+        .documents-list td {
+            color: #e2e8f0;
+        }
+        
+        .documents-list tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='img/adal_iconb.png') }}" alt="ADAL" class="logo">
+                <span class="logo-text">ADAL Admin</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.queries') }}" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Queries</span>
+                </a>
+                <a href="{{ url_for('admin.users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin.upload_page') }}" class="nav-item active">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload</span>
+                </a>
+                {% if admin_role == 'super_admin' %}
+                <a href="{{ url_for('admin.settings') }}" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                {% endif %}
+                
+                <div class="nav-divider"></div>
+                
+                <a href="{{ url_for('main.chat') }}" class="nav-item">
+                    <i class="fas fa-comments"></i>
+                    <span>Back to Chat</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://ui-avatars.com/api/?name={{ user.full_name or 'Admin' }}&background=10b981&color=fff" alt="User Avatar">
+                    <div class="user-details">
+                        <span class="user-name">{{ user.full_name or 'Admin' }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>Upload Thesis Document</h1>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <!-- Upload Form -->
+                <div class="data-card full-width">
+                    <div class="card-header">
+                        <h3><i class="fas fa-file-pdf"></i> Upload New Thesis PDF</h3>
+                    </div>
+                    <div class="card-content">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <!-- File Upload Zone -->
+                            <div class="upload-zone" id="uploadZone">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag & drop a PDF file here or <strong>click to browse</strong></p>
+                                <p class="file-name" id="fileName"></p>
+                                <input type="file" id="fileInput" name="file" accept=".pdf" hidden>
+                            </div>
+                            
+                            <!-- Metadata Fields -->
+                            <div class="form-group">
+                                <label for="title">Thesis Title (optional)</label>
+                                <input type="text" id="title" name="title" placeholder="Leave blank to auto-extract from PDF">
+                                <p class="hint">If left blank, the system will attempt to extract the title from the PDF</p>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="department">Department / College</label>
+                                    <select id="department" name="department">
+                                        <option value="">Select Department</option>
+                                        <option value="BSN">BSN - Bachelor of Science in Nursing</option>
+                                        <option value="BSM">BSM - Bachelor of Science in Midwifery</option>
+                                        <option value="CAS">CAS - College of Arts and Sciences</option>
+                                        <option value="CCS">CCS - College of Computer Studies</option>
+                                        <option value="CTHBM">CTHBM - College of Tourism, Hospitality and Business Management</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="year">Publication Year</label>
+                                    <input type="text" id="year" name="year" placeholder="e.g., 2024" maxlength="4">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="url">Google Drive URL (optional)</label>
+                                <input type="url" id="url" name="url" placeholder="https://drive.google.com/file/d/...">
+                                <p class="hint">Link to the full thesis document on Google Drive</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="allowDuplicate" name="allow_duplicate">
+                                    <label for="allowDuplicate">Allow duplicate upload (re-upload existing document)</label>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-bar" id="progressBar">
+                                <div class="progress" id="progress"></div>
+                            </div>
+                            
+                            <button type="submit" class="upload-btn" id="uploadBtn" disabled>
+                                <i class="fas fa-upload"></i>
+                                <span>Upload & Index Document</span>
+                            </button>
+                        </form>
+                        
+                        <!-- Result Display -->
+                        <div class="result-box" id="resultBox">
+                            <h4 id="resultTitle"></h4>
+                            <p id="resultMessage"></p>
+                            <div class="result-details" id="resultDetails"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Uploaded Documents List -->
+                <div class="data-card full-width documents-list">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list"></i> Uploaded Documents</h3>
+                        <button class="btn-secondary" onclick="loadDocuments()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Department</th>
+                                    <th>Year</th>
+                                    <th>Chunks</th>
+                                    <th>Upload Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTable">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #718096;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const progressBar = document.getElementById('progressBar');
+        const progress = document.getElementById('progress');
+        const resultBox = document.getElementById('resultBox');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const resultDetails = document.getElementById('resultDetails');
+        
+        // Drag and drop handlers
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            } else {
+                showResult('error', 'Invalid File', 'Please upload a PDF file only.');
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        function handleFileSelect(file) {
+            fileName.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            uploadBtn.disabled = false;
+            resultBox.className = 'result-box';
+        }
+        
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files.length) {
+                showResult('error', 'No File Selected', 'Please select a PDF file to upload.');
+                return;
+            }
+            
+            const formData = new FormData(uploadForm);
+            
+            // Disable form while uploading
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            progressBar.classList.add('active');
+            progress.style.width = '30%';
+            
+            try {
+                const response = await fetch('/admin/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                progress.style.width = '70%';
+                
+                const data = await response.json();
+                
+                progress.style.width = '100%';
+                
+                setTimeout(() => {
+                    progressBar.classList.remove('active');
+                    progress.style.width = '0%';
+                    
+                    if (response.ok) {
+                        showResult('success', 'Upload Successful!', data.message, data);
+                        uploadForm.reset();
+                        fileName.textContent = '';
+                        loadDocuments();
+                    } else if (data.error_type === 'duplicate') {
+                        showResult('warning', 'Duplicate Document Detected', data.error);
+                    } else {
+                        showResult('error', 'Upload Failed', data.error);
+                    }
+                    
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="fas fa-upload"></i> <span>Upload & Index Document</span>';
+                }, 500);
+                
+            } catch (error) {
+                progressBar.classList.remove('active');
+                showResult('error', 'Upload Failed', 'Network error. Please try again.');
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> <span>Upload & Index Document</span>';
+            }
+        });
+        
+        function showResult(type, title, message, data = null) {
+            resultBox.className = `result-box ${type}`;
+            
+            const icon = type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle';
+            resultTitle.innerHTML = `<i class="fas fa-${icon}"></i> ${title}`;
+            resultMessage.textContent = message;
+            
+            if (data && type === 'success') {
+                resultDetails.innerHTML = `
+                    <p><strong>Title:</strong> ${data.title || 'N/A'}</p>
+                    <p><strong>Pages:</strong> ${data.pages || 0}</p>
+                    <p><strong>Chunks indexed:</strong> ${data.documents_added || 0}</p>
+                    ${data.abstract ? `<p><strong>Abstract preview:</strong> ${data.abstract}</p>` : ''}
+                `;
+                resultDetails.style.display = 'block';
+            } else {
+                resultDetails.style.display = 'none';
+            }
+        }
+        
+        async function loadDocuments() {
+            const tbody = document.getElementById('documentsTable');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #718096;">Loading...</td></tr>';
+            
+            try {
+                const response = await fetch('/admin/api/documents');
+                const data = await response.json();
+                
+                if (data.documents && data.documents.length > 0) {
+                    tbody.innerHTML = data.documents.map(doc => `
+                        <tr>
+                            <td title="${doc.title}">${truncate(doc.title, 50)}</td>
+                            <td><span class="badge badge-info">${doc.department || 'N/A'}</span></td>
+                            <td>${doc.year || 'N/A'}</td>
+                            <td>${doc.chunks || 0}</td>
+                            <td>${formatDate(doc.upload_date)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #718096;">No documents uploaded yet</td></tr>';
+                }
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #ef4444;">Error loading documents</td></tr>';
+            }
+        }
+        
+        function truncate(str, len) {
+            return str && str.length > len ? str.substring(0, len) + '...' : str || '';
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+        
+        // Mobile menu toggle
+        document.getElementById('menu-toggle')?.addEventListener('click', () => {
+            document.querySelector('.admin-sidebar').classList.toggle('open');
+        });
+        
+        // Load documents on page load
+        loadDocuments();
+    </script>
+</body>
+</html>
